@@ -32,7 +32,7 @@ public class UsuarioApplication implements CommandLineRunner {
 								"Gabriel",
 								"gabriel@pstgln.com",
 								"123456",
-								20.0)
+								30.0)
 				)
 		);
 	}
