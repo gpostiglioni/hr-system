@@ -1,0 +1,81 @@
+version: '3.4'
+
+services:
+  eureka-server:
+    build:
+      context: eurekaserver
+      dockerfile: Dockerfile
+    image: gpostiglioni/eurekaserver:1.0.0
+    ports:
+      - "8761:8761"
+    expose:
+      - "8761"
+    networks:
+      - hr-system
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb
+    volumes:
+      - "/srv/mariadb/:/var/lib/mysql"
+    environment:
+      MARIADB_ROOT_PASSWORD: 123456
+    ports:
+      - "43306:3306"
+    networks:
+      - hr-system
+
+  api-gateway:
+    build:
+      context: api-gateway
+      dockerfile: Dockerfile
+    image: gpostiglioni/api-gateway:1.0.0
+    ports:
+      - "8765:8765"
+    expose:
+      - "8765"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_URL=http://eureka-server:8761/eureka
+    networks:
+      - hr-system
+  
+  api-usuario:
+    build:
+      context: usuario
+      dockerfile: Dockerfile
+    image: gpostiglioni/api-usuario:1.0.0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - eureka-server
+      - mariadb
+      - api-gateway
+    environment:
+      - EUREKA_URL=http://eureka-server:8761/eureka
+      - DATASOURCE=jdbc:mariadb://mariadb:3306/usuario
+    networks:
+      - hr-system
+  
+  payroll-api:
+    build:
+      context: payroll-api
+      dockerfile: Dockerfile
+    image: gpostiglioni/payroll-api:1.0.0
+    ports:
+      - "8100:8100"
+    expose:
+      - "8100"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - api-usuario
+    environment:
+      - EUREKA_URL=http://eureka-server:8761/eureka
+    networks:
+      - hr-system
+
+networks:
+  hr-system:
+    driver: bridge
